@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+# 起動するコマンド: $ uvicorn main:app --reload
 
 # :pathはいかなるパスにもマッチする
 # curl http://127.0.0.1:8000/files//home/johndoe/myfile.txt
@@ -35,4 +36,15 @@ class Item(BaseModel):
 @app.post("/items/")
 async def create_item(item: Item):
     return item
+
+# リクエストボディ + パスパラメータ
+@app.get("/items/{item_id}")
+async def read_items(
+    item_id: int = Path(title="The ID of the item to get"),
+    q: Union[str, None] = Query(default=None, alias="item-query"),
+):
+    results = {"item_id": item_id}
+    if q:
+        results.update({"q": q})
+    return results
 
