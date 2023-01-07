@@ -2,7 +2,7 @@ from typing import Union
 from typing import List
 
 from fastapi import FastAPI, Path, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 app = FastAPI()
@@ -29,9 +29,16 @@ async def read_file(file_path: str):
 # curl "http://127.0.0.1:8000/items/?name=foo&price=4.2"
 class Item(BaseModel):
     name: str
-    description: Union[str, None] = None
-    price: float
+    description: Union[str, None] = Field(
+        default=None, title="The description of the item", max_length=300
+    )
+    price: float = Field(gt=0, description="The price must be greater than zero")
     tax: Union[float, None] = None
+
+class User(BaseModel):
+    username: str
+    full_name: Union[str, None] = None
+
 
 @app.post("/items/")
 async def create_item(item: Item):
@@ -62,4 +69,11 @@ async def read_items(
     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
     if q:
         results.update({"q": q})
+    return results
+
+# updateメソッド、複数のbodyパラメータ
+# curl -X 'PUT' 'http://127.0.0.1:8000/items/1' -H 'accept: application/json'
+@app.put("/items/{item_id}")
+async def update_item(item_id: int, item: Item, user: User):
+    results = {"item_id": item_id, "item": item, "user": user}
     return results
